@@ -2,9 +2,6 @@
 #define pinoSensor1 A1 //Sensor de refletancia direito
 #define pinoSensor2 A2 //Sensor de refletancia esquerdo
 
-int valorSensor1 = 0; //Valor sensor de refletancia esquerdo
-int valorSensor2 = 0; //Valor sensor de refletancia direito
-
 // Motores
 #define M_Direito 5 //Motor Direito(A) Vel 0 - 255
 #define M_Esquerdo 6 //Motor Esquerdo(B) Vel 0 - 255
@@ -16,9 +13,6 @@ int valorSensor2 = 0; //Valor sensor de refletancia direito
 #define DIR_E_NORMAL HIGH
 #define DIR_E_REVERSO LOW
 
-// Debug sensores
-#define DEBUG_SENSORES 1
-
 // Velocidade normal
 #define VEL_NORMAL 100
 
@@ -27,12 +21,19 @@ int valorSensor2 = 0; //Valor sensor de refletancia direito
 
 // Refletancia mínima.
 // Abaixo disso, o sensor está SOBRE a faixa.
-#define REFLETANCIA_MIN 850
+#define LIMITE 950
+
+// Aciona motores
+// Caso queira apensa ver os valores dos sensores no monitor serial,
+// sem que os motores sejam acionados, coloque o valor 0.
+#define ENGINES_ON 1
 
 
-int V_Direito, V_Esquerdo;
 
-int mode;
+// MENOR o valor => está no BRANCO
+// MAIOR o valor => está no PRETO
+int valorSensor1 = 0; //Valor sensor de refletancia esquerdo
+int valorSensor2 = 0; //Valor sensor de refletancia direito
 
 void setup() {
   Serial.begin(9600);
@@ -42,16 +43,13 @@ void setup() {
   pinMode(dirD, OUTPUT);
   pinMode(dirE, OUTPUT);
 
-
-  // Para debugar valores dos sensores no terminal, 
-  // com o cabo conectado à placa, utilize mode = 1.
-  mode = 0; // 0 = motores funcionam; 1 = motores parados
-
   Para();
 
-  if(mode != DEBUG_SENSORES) {
-    PFrente();
-  }
+  delay(5000);
+
+#if ENGINES_ON == 1
+    MoveParaFrente();
+#endif
 }
 
 void Para()
@@ -61,65 +59,66 @@ void Para()
 }
 
 
-void PFrente()
+void MoveParaFrente()
 {
+#if ENGINES_ON == 1
   digitalWrite(dirD, DIR_D_NORMAL);
   analogWrite(M_Direito, VEL_NORMAL);
   digitalWrite(dirE, DIR_E_NORMAL);
   analogWrite(M_Esquerdo, VEL_NORMAL);
+#endif
 }
 
 
 void loop() {
-
-  segueLinha();
-
-  Serial.print("valorSensor1 = ");
-  Serial.print(valorSensor1);
-  Serial.print("\t");
-  Serial.print("valorSensor2 = ");
-  Serial.print(valorSensor2);
-
-  delay(1500);
-}
-
-
-void segueLinha() {
-
-  if(mode != DEBUG_SENSORES) {
-    PFrente();
-  }
-
   lerSensores();
+  
+  #if ENGINES_ON == 1
+    corrigeCurso();
+  #endif
 
-  if(valorSensor1 == 1023 && valorSensor2 == 1023) {
-    Para();
-  } else {
-    if(mode != DEBUG_SENSORES) {
-       corrigeCurso();
-    }
-  }
-
+  //delay(250);
 }
 
-void corrigeCurso() {
-    if(valorSensor1 < REFLETANCIA_MIN) { // Sensor DIREITO entrou na faixa
-      digitalWrite(dirD, DIR_D_REVERSO);
-      analogWrite(M_Direito, VEL_MAXIMA);
-      digitalWrite(dirE, DIR_E_NORMAL);
-      analogWrite(M_Esquerdo, VEL_MAXIMA);
-   }
-
-   if(valorSensor2 < REFLETANCIA_MIN) { // Sensor ESQUERDO entrou na faixa
-      digitalWrite(dirE, DIR_E_REVERSO);
-      analogWrite(M_Esquerdo, VEL_MAXIMA);
-      digitalWrite(dirD, DIR_D_NORMAL);
-      analogWrite(M_Direito, VEL_MAXIMA);
-   }
-}
 
 
 void lerSensores() {
   valorSensor1 = analogRead(pinoSensor1);
   valorSensor2 = analogRead(pinoSensor2);
+
+  Serial.print("valorSensor1 = ");
+  Serial.print(valorSensor1);
+  Serial.print("\t");
+  Serial.print("valorSensor2 = ");
+  Serial.println(valorSensor2);
 }
+
+
+void corrigeCurso() {
+    if(valorSensor1 < LIMITE && valorSensor2 < LIMITE) {
+      MoveParaFrente();
+    }
+  
+    if(valorSensor2 > LIMITE) { 
+      // Sensor ESQUERDO entrou na faixa
+      // Move o robô para a direita
+
+      digitalWrite(dirD, DIR_D_NORMAL);
+      analogWrite(M_Direito, VEL_NORMAL);
+      digitalWrite(dirE, DIR_E_REVERSO);
+      analogWrite(M_Esquerdo, VEL_NORMAL);
+   }
+
+   if(valorSensor1 > LIMITE) {
+      // Sensor DIREITO entrou na faixa
+      // Move o robô para a esquerda
+      
+      digitalWrite(dirD, DIR_D_REVERSO);
+      analogWrite(M_Direito, VEL_NORMAL);
+      digitalWrite(dirE, DIR_E_NORMAL);
+      analogWrite(M_Esquerdo, VEL_NORMAL);
+   }
+}
+
+
+
