@@ -14,14 +14,15 @@
 #define DIR_E_REVERSO LOW
 
 // Velocidade normal
-#define VEL_NORMAL 100
+#define VEL_D_NORMAL 150
+#define VEL_E_NORMAL 100
 
 // Velocidade maxima
 #define VEL_MAXIMA 180
 
 // Refletancia mínima.
 // Abaixo disso, o sensor está SOBRE a faixa.
-#define LIMITE 950
+#define LIMITE 780
 
 // Aciona motores
 // Caso queira apensa ver os valores dos sensores no monitor serial,
@@ -47,9 +48,7 @@ void setup() {
 
   delay(5000);
 
-#if ENGINES_ON == 1
-    MoveParaFrente();
-#endif
+  MoveParaFrente();
 }
 
 void Para()
@@ -63,9 +62,9 @@ void MoveParaFrente()
 {
 #if ENGINES_ON == 1
   digitalWrite(dirD, DIR_D_NORMAL);
-  analogWrite(M_Direito, VEL_NORMAL);
+  analogWrite(M_Direito, VEL_D_NORMAL);
   digitalWrite(dirE, DIR_E_NORMAL);
-  analogWrite(M_Esquerdo, VEL_NORMAL);
+  analogWrite(M_Esquerdo, VEL_E_NORMAL);
 #endif
 }
 
@@ -86,11 +85,14 @@ void lerSensores() {
   valorSensor1 = analogRead(pinoSensor1);
   valorSensor2 = analogRead(pinoSensor2);
 
-  Serial.print("valorSensor1 = ");
-  Serial.print(valorSensor1);
-  Serial.print("\t");
-  Serial.print("valorSensor2 = ");
-  Serial.println(valorSensor2);
+  if (ENGINES_ON == 0) {
+    Serial.print("valorSensor1 = ");
+    Serial.print(valorSensor1);
+    Serial.print("\t");
+    Serial.print("valorSensor2 = ");
+    Serial.println(valorSensor2);
+    delay(1000);
+  }
 }
 
 
@@ -101,22 +103,22 @@ void corrigeCurso() {
   
     if(valorSensor2 > LIMITE) { 
       // Sensor ESQUERDO entrou na faixa
-      // Move o robô para a direita
+      // Move o robô para a esquerda
 
       digitalWrite(dirD, DIR_D_NORMAL);
-      analogWrite(M_Direito, VEL_NORMAL);
+      analogWrite(M_Direito, VEL_D_NORMAL * 0.8);
       digitalWrite(dirE, DIR_E_REVERSO);
-      analogWrite(M_Esquerdo, VEL_NORMAL);
+      analogWrite(M_Esquerdo, VEL_E_NORMAL * 0.8);
    }
 
    if(valorSensor1 > LIMITE) {
       // Sensor DIREITO entrou na faixa
-      // Move o robô para a esquerda
+      // Move o robô para a direita
       
       digitalWrite(dirD, DIR_D_REVERSO);
-      analogWrite(M_Direito, VEL_NORMAL);
+      analogWrite(M_Direito, VEL_D_NORMAL * 0.8);
       digitalWrite(dirE, DIR_E_NORMAL);
-      analogWrite(M_Esquerdo, VEL_NORMAL);
+      analogWrite(M_Esquerdo, VEL_E_NORMAL * 0.8);
    }
 }
 
