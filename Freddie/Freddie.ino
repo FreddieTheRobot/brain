@@ -101,25 +101,37 @@ void corrigeCurso() {
       MoveParaFrente();
     }
   
-    if(valorSensor2 > LIMITE) { 
+    if(valorSensor2 > LIMITE && valorSensor1 < LIMITE) { 
       // Sensor ESQUERDO entrou na faixa
       // Move o robô para a esquerda
 
+      
       digitalWrite(dirD, DIR_D_NORMAL);
-      analogWrite(M_Direito, VEL_D_NORMAL * 0.8);
+      analogWrite(M_Direito, VEL_D_NORMAL * 1.5);
       digitalWrite(dirE, DIR_E_REVERSO);
-      analogWrite(M_Esquerdo, VEL_E_NORMAL * 0.8);
+      analogWrite(M_Esquerdo, VEL_E_NORMAL * 0.75);
    }
 
-   if(valorSensor1 > LIMITE) {
+   if(valorSensor1 > LIMITE && valorSensor2 < LIMITE) {
       // Sensor DIREITO entrou na faixa
       // Move o robô para a direita
       
       digitalWrite(dirD, DIR_D_REVERSO);
-      analogWrite(M_Direito, VEL_D_NORMAL * 0.8);
+      analogWrite(M_Direito, VEL_D_NORMAL * 0.75);
       digitalWrite(dirE, DIR_E_NORMAL);
-      analogWrite(M_Esquerdo, VEL_E_NORMAL * 0.8);
+      analogWrite(M_Esquerdo, VEL_E_NORMAL * 1.5);
    }
+
+  if(valorSensor1 > LIMITE && valorSensor2 > LIMITE){
+      //Sensor DIREITO E ESQUERDO NA FAIXA
+      //Da ré
+
+      digitalWrite(dirD, DIR_D_REVERSO);
+      analogWrite(M_Direito, VEL_D_NORMAL);
+      digitalWrite(dirE, DIR_E_REVERSO);
+      analogWrite(M_Esquerdo, VEL_E_NORMAL);
+  }
+
 }
 
 
