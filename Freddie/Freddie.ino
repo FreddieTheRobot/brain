@@ -1,79 +1,78 @@
 // Sensor de refletancia
-#define pinoSensor1 A1 //Sensor de refletancia direito
-#define pinoSensor2 A2 //Sensor de refletancia esquerdo
+#define pinoSensor1 A1            //Sensor de refletancia direito
+#define pinoSensor2 A2            //Sensor de refletancia esquerdo
 
 //Sensor ultrassonico
-#define echoPin 13 //Pino 13 recebe o pulso do echo
-#define trigPin 12 //Pino 12 envia o pulso para gerar o echo
+#define echoPin 13                //Pino 13 recebe o pulso do echo
+#define trigPin 12                //Pino 12 envia o pulso para gerar o echo
 
 // Motores
-#define M_Direito 5 //Motor Direito(A) Vel 0 - 255
-#define M_Esquerdo 6 //Motor Esquerdo(B) Vel 0 - 255
-#define dirD 7 //Direcao do motor A - HIGH (Frente) ou LOW (Tras)
-#define dirE 8 //Direcao do motor B - HIGH (Frente) ou LOW (Tras)
+#define M_Direito 5               // Pino da velocidade de rotação do motor direito
+#define M_Esquerdo 6              // Pino da velocidade de rotação do motor esquerdo
+#define dirD 7                    // Pino do sentido de rotação do motor direito
+#define dirE 8                    // Pino do sentido de rotação do motor esquerdo
 
-#define DIR_D_NORMAL LOW
-#define DIR_D_REVERSO HIGH
-#define DIR_E_NORMAL HIGH
-#define DIR_E_REVERSO LOW
+// Sentido de rotação dos motores
+#define DIR_D_NORMAL LOW          // Rotação para frente do motor direito
+#define DIR_D_REVERSO HIGH        // Rotação para trás do motor direito
+#define DIR_E_NORMAL HIGH         // Rotação para frente do motor esquerdo
+#define DIR_E_REVERSO LOW         // Rotação para trás do motor esquerdo
 
 // Velocidade normal
-#define VEL_D_NORMAL 150 * 0.72
-#define VEL_E_NORMAL 103 * 0.72
-#define VEL_D_CURVA VEL_D_NORMAL
-#define VEL_E_CURVA VEL_E_NORMAL
-
-// Velocidade maxima
-#define VEL_MAXIMA 180
+#define VEL_D_NORMAL 150 * 0.72   // Velociade normal do motor direito
+#define VEL_E_NORMAL 103 * 0.72   // Velociade normal do motor esquerdo
+#define VEL_D_CURVA VEL_D_NORMAL  // Velociade na curva do motor direito
+#define VEL_E_CURVA VEL_E_NORMAL  // Velociade na curva do motor esquerdo
 
 // Refletancia mínima.
 // Abaixo disso, o sensor está SOBRE a faixa.
-#define LIMITE_OTICO 780
+#define LIMITE_OTICO 780          // Limite de refletância
 
 // Distancia minima em cm
 // Abaixo disso, o robo para por 10 segundos
-#define LIMITE_SONICO 10
+#define LIMITE_SONICO 10          // Limite sônico
 
 // Aciona motores
 // Caso queira apenas ver os valores dos sensores no monitor serial,
 // sem que os motores sejam acionados, coloque o valor 0.
-#define ENGINES_ON 1
+#define ENGINES_ON 1              // Flag para controle dos motores (debug)
 
 
 
 // MENOR o valor => está no BRANCO
 // MAIOR o valor => está no PRETO
-int valorSensor1 = 0; //Valor sensor de refletancia esquerdo
-int valorSensor2 = 0; //Valor sensor de refletancia direito
+int valorSensor1 = 0;             // Valor sensor de refletancia esquerdo
+int valorSensor2 = 0;             // Valor sensor de refletancia direito
 
-long duracao; //Valor para o calculo da distancia
-long distancia; //Valor da distancia em cm
+long duracao;                     // Valor para o calculo da distancia
+long distancia;                   // Valor da distancia em cm
 
 
 
 void setup() {
   Serial.begin(9600);
 
-  pinMode(echoPin, INPUT); // define o pino 13 como entrada (recebe)
-  pinMode(trigPin, OUTPUT); // define o pino 12 como saida (envia)
+  pinMode(echoPin, INPUT);        // define o pino 13 como entrada (recebe)
+  pinMode(trigPin, OUTPUT);       // define o pino 12 como saida (envia)
 
-  pinMode(M_Esquerdo, OUTPUT);
-  pinMode(M_Direito, OUTPUT);
-  pinMode(dirD, OUTPUT);
-  pinMode(dirE, OUTPUT);
+  pinMode(M_Esquerdo, OUTPUT);    // configura o pino de velocidade do motor esquerdo
+  pinMode(M_Direito, OUTPUT);     // configura o pino de velocidade do motor direito
+  pinMode(dirD, OUTPUT);          // configura o pino de sentido de rotação do motor direito
+  pinMode(dirE, OUTPUT);          // configura o pino de sentido de rotaçãodo motor esquerdo
 
-  Para();
+  Para();                         // Para o robô
 
   delay(3000);
 
-  MoveParaFrente();
+  MoveParaFrente();               // Inicia o movimento
 }
 
 
 void loop() {
 
-  SeguePista();
+  SeguePista();                   // Lê sensores e faz correção da trajetória
 
+  // Se detectou o obstáculo, para por 10s e reinicia o movimento.
   if (detectouObstaculo()) {
     Para();
     delay(10000);
@@ -86,7 +85,7 @@ void loop() {
 
 }
 
-
+// Lê sensores e faz correção da trajetória
 void SeguePista() {
   lerSensores();
 
@@ -95,12 +94,14 @@ void SeguePista() {
 #endif
 }
 
+// Para os motores
 void Para()
 {
   analogWrite(M_Esquerdo, 0);
   analogWrite(M_Direito, 0);
 }
 
+// Movo o robô para frente
 void MoveParaFrente()
 {
 #if ENGINES_ON == 1
@@ -111,6 +112,10 @@ void MoveParaFrente()
 #endif
 }
 
+// Move o robô para a esquerda
+// - aumentando a velocidade do motor direito
+// - diminuindo a velocidada do motor esquerdo
+// - invertendo o sentido de rotação do motor esquerdo
 void MoveParaEsquerda() {
   digitalWrite(dirD, DIR_D_NORMAL);
   analogWrite(M_Direito, VEL_D_CURVA * 1.5);
@@ -118,6 +123,10 @@ void MoveParaEsquerda() {
   analogWrite(M_Esquerdo, VEL_E_CURVA * 0.75);
 }
 
+// Move o robô para a direita
+// - aumentando a velocidade do motor esquerdo
+// - diminuindo a velocidada do motor direito
+// - invertendo o sentido de rotação do motor direito
 void MoveParaDireita() {
   digitalWrite(dirD, DIR_D_REVERSO);
   analogWrite(M_Direito, VEL_D_CURVA * 0.75);
@@ -125,6 +134,7 @@ void MoveParaDireita() {
   analogWrite(M_Esquerdo, VEL_E_CURVA * 2.3);
 }
 
+// Movo o robô para trás
 void MoveParaTras() {
   digitalWrite(dirD, DIR_D_REVERSO);
   analogWrite(M_Direito, VEL_D_NORMAL);
@@ -132,6 +142,7 @@ void MoveParaTras() {
   analogWrite(M_Esquerdo, VEL_E_NORMAL);
 }
 
+// Lê os sensores óticos
 void lerSensores() {
   valorSensor1 = analogRead(pinoSensor1);
   valorSensor2 = analogRead(pinoSensor2);
@@ -152,29 +163,30 @@ void lerSensores() {
   }
 }
 
+
+// Corrige o curso de acordo com os valores obtidos dos sensores óticos
 void corrigeCurso() {
+  // Ambos os sensores estão sobre a superfície clara
+  // Move para frente
   if (valorSensor1 < LIMITE_OTICO && valorSensor2 < LIMITE_OTICO) {
     MoveParaFrente();
   }
 
+  // Sensor ESQUERDO entrou na faixa
+  // Move o robô para a esquerda
   if (valorSensor2 > LIMITE_OTICO && valorSensor1 < LIMITE_OTICO) {
-    // Sensor ESQUERDO entrou na faixa
-    // Move o robô para a esquerda
-
     MoveParaEsquerda();
   }
 
+  // Sensor DIREITO entrou na faixa
+  // Move o robô para a direita
   if (valorSensor1 > LIMITE_OTICO && valorSensor2 < LIMITE_OTICO) {
-    // Sensor DIREITO entrou na faixa
-    // Move o robô para a direita
-
     MoveParaDireita();
   }
 
+  // Ambos os sensores estão sobre a superfície escura
+  // Move para trás até a situação se reverter
   if (valorSensor1 > LIMITE_OTICO && valorSensor2 > LIMITE_OTICO) {
-    //Sensor DIREITO E ESQUERDO NA FAIXA
-    //Da ré
-
     while (valorSensor1 > LIMITE_OTICO && valorSensor2 > LIMITE_OTICO) {
       for (int i = 0; i < 11000; i++) {
         MoveParaTras();
@@ -185,6 +197,7 @@ void corrigeCurso() {
 
 }
 
+// Verifica se há obstáculo, utilizando os valores obtidos do sensor ultrassônico
 bool detectouObstaculo() {
   //seta o pino 12 com um pulso baixo "LOW" ou desligado ou ainda 0
   digitalWrite(trigPin, LOW);
@@ -209,6 +222,3 @@ bool detectouObstaculo() {
     return false;
   }
 }
-
-
-
